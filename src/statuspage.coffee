@@ -41,7 +41,7 @@ module.exports = (robot) ->
     if process.env.HUBOT_LOG_LEVEL == 'debug'
       console.log process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED, msg.envelope.user, admin_role, robot.auth.hasRole(msg.envelope.user, admin_role)
 
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
         msg.reply "You do not have access to this command"
         return false
@@ -62,7 +62,7 @@ module.exports = (robot) ->
               msg.send "#{incident.name} (Status: #{incident.status}, Created: #{incident.created_at})"
 
   robot.respond /(?:status|statuspage) update (investigating|identified|monitoring|resolved) (.+)/i, (msg) ->
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
         msg.reply "You do not have access to this command"
         return false
@@ -92,7 +92,7 @@ module.exports = (robot) ->
               msg.send "Updated incident \"#{unresolvedIncidents[0].name}\""
 
   robot.respond /(?:status|statuspage) open (investigating|identified|monitoring|resolved) ([^:]+)(: ?(.+))?/i, (msg) ->
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
         msg.reply "You do not have access to this command"
         return false
@@ -139,7 +139,7 @@ module.exports = (robot) ->
           msg.send ("#{component.name}" for component in working_components).join("\n") + "\n"
 
   robot.respond /(?:status|statuspage) ((?!(incidents|open|update|resolve|create))(\S ?)+)\?$/i, (msg) ->
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
         msg.reply "You do not have access to this command"
         return false
@@ -156,7 +156,7 @@ module.exports = (robot) ->
          msg.send "Status of #{msg.match[1]}: #{components[0].status.replace(/_/g, " ")}"
 
   robot.respond /(?:status|statuspage) ((\S ?)+) (major( outage)?|degraded( performance)?|partial( outage)?|operational)/i, (msg) ->
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
         msg.reply "You do not have access to this command"
         return false
