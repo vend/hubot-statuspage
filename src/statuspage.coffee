@@ -6,6 +6,7 @@
 #   HUBOT_STATUS_PAGE_TOKEN - Required
 #   HUBOT_STATUS_PAGE_TWITTER_ENABLED - Optional: 't' or 'f'
 #   HUBOT_STATUS_PAGE_SHOW_WORKING - Optional: '1' or nothing
+#   HUBOT_STATUS_PAGE_AUTH_ENABLED - Optional: '1' or nothing
 #
 # Commands:
 #   hubot status? - Display an overall status of all components
@@ -31,7 +32,17 @@ module.exports = (robot) ->
   else
     send_twitter_update = 'f'
 
+  if process.env.HUBOT_STATUS_PAGE_AUTH_ROLE
+    admin_role = process.env.HUBOT_STATUS_PAGE_AUTH_ROLE
+  else
+    admin_role = 'admin'
+
   robot.respond /(?:status|statuspage) incidents\??/i, (msg) ->
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+      unless robot.auth.hasRole(msg.envelope.user, admin_role)
+        msg.reply "You do not have access to this command"
+        return false
+
     msg.http("#{baseUrl}/incidents.json").headers(authHeader).get() (err, res, body) ->
       response = JSON.parse body
       if response.error
@@ -48,6 +59,11 @@ module.exports = (robot) ->
               msg.send "#{incident.name} (Status: #{incident.status}, Created: #{incident.created_at})"
 
   robot.respond /(?:status|statuspage) update (investigating|identified|monitoring|resolved) (.+)/i, (msg) ->
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+      unless robot.auth.hasRole(msg.envelope.user, admin_role)
+        msg.reply "You do not have access to this command"
+        return false
+
     msg.http("#{baseUrl}/incidents.json").headers(authHeader).get() (err, res, body) ->
       response = JSON.parse body
       if response.error
@@ -73,6 +89,11 @@ module.exports = (robot) ->
               msg.send "Updated incident \"#{unresolvedIncidents[0].name}\""
 
   robot.respond /(?:status|statuspage) open (investigating|identified|monitoring|resolved) ([^:]+)(: ?(.+))?/i, (msg) ->
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+      unless robot.auth.hasRole(msg.envelope.user, admin_role)
+        msg.reply "You do not have access to this command"
+        return false
+
     if msg.match.length == 5
       name = msg.match[2]
       message = msg.match[4]
@@ -115,6 +136,11 @@ module.exports = (robot) ->
           msg.send ("#{component.name}" for component in working_components).join("\n") + "\n"
 
   robot.respond /(?:status|statuspage) ((?!(incidents|open|update|resolve|create))(\S ?)+)\?$/i, (msg) ->
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+      unless robot.auth.hasRole(msg.envelope.user, admin_role)
+        msg.reply "You do not have access to this command"
+        return false
+
     msg.http("#{baseUrl}/components.json")
      .headers(authHeader)
      .get() (err, res, body) ->
@@ -127,6 +153,11 @@ module.exports = (robot) ->
          msg.send "Status of #{msg.match[1]}: #{components[0].status.replace(/_/g, " ")}"
 
   robot.respond /(?:status|statuspage) ((\S ?)+) (major( outage)?|degraded( performance)?|partial( outage)?|operational)/i, (msg) ->
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
+      unless robot.auth.hasRole(msg.envelope.user, admin_role)
+        msg.reply "You do not have access to this command"
+        return false
+
     componentName = msg.match[1]
     status = msg.match[3]
     status = componentStatuses[status] || status
