@@ -11,6 +11,10 @@ Interaction with the StatusPage.io API to open and update incidents, change comp
  * `export HUBOT_STATUS_PAGE_TOKEN=token_for_status_page`
  * `export HUBOT_STATUS_PAGE_TWITTER_ENABLED=t_or_f`
 
+* If using auth (see auth.coffee from hubot-scripts package)
+ * `export HUBOT_STATUS_PAGE_AUTH_ENABLED=1`
+ * `export HUBOT_STATUS_PAGE_AUTH_ROLE=<admin_role>` - defaults to `admin`
+
 If you are using Heroku to host your bot, replace `export ...` with `heroku set:config ...`.
 
 ## Adding to Your Hubot
