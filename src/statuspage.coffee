@@ -38,6 +38,9 @@ module.exports = (robot) ->
     admin_role = 'admin'
 
   robot.respond /(?:status|statuspage) incidents\??/i, (msg) ->
+    if process.env.HUBOT_LOG_LEVEL == 'debug'
+      console.log process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED, msg.envelope.user, admin_role, robot.auth.hasRole(msg.envelope.user, admin_role)
+
     if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED == 1
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
         msg.reply "You do not have access to this command"
