@@ -7,6 +7,8 @@
 #   HUBOT_STATUS_PAGE_TWITTER_ENABLED - Optional: 't' or 'f'
 #   HUBOT_STATUS_PAGE_SHOW_WORKING - Optional: '1' or nothing
 #   HUBOT_STATUS_PAGE_AUTH_ENABLED - Optional: '1' or nothing
+#   HUBOT_STATUS_PAGE_AUTH_ROLE - Optional: defaults to 'admin'
+#   HUBOT_STATUS_PAGE_RESTRICT_ROOMS - Optional: comma-separated list of rooms or blank
 #
 # Commands:
 #   hubot status? - Display an overall status of all components
@@ -20,6 +22,12 @@
 #   roidrage, raventools
 
 module.exports = (robot) ->
+
+  checkRoom = (msg, restricted_rooms) ->
+    return true if restricted_rooms == false
+    return false unless msg.envelope.room in restricted_rooms
+    return true
+
   baseUrl = "https://api.statuspage.io/v1/pages/#{process.env.HUBOT_STATUS_PAGE_ID}"
   authHeader = Authorization: "OAuth #{process.env.HUBOT_STATUS_PAGE_TOKEN}"
   componentStatuses =
@@ -37,13 +45,15 @@ module.exports = (robot) ->
   else
     admin_role = 'admin'
 
-  robot.respond /(?:status|statuspage) incidents\??/i, (msg) ->
-    if process.env.HUBOT_LOG_LEVEL == 'debug'
-      console.log process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED, msg.envelope.user, admin_role, robot.auth.hasRole(msg.envelope.user, admin_role)
+  if process.env.HUBOT_STATUS_PAGE_RESTRICT_ROOMS
+    restricted_rooms = process.env.HUBOT_STATUS_PAGE_RESTRICT_ROOMS.split ','
+  else
+    restricted_rooms = false
 
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
-      unless robot.auth.hasRole(msg.envelope.user, admin_role)
-        msg.reply "You do not have access to this command"
+  robot.respond /(?:status|statuspage) incidents\??/i, (msg) ->
+    if process.env.HUBOT_STATUS_PAGE_RESTRICT_ROOMS
+      unless checkRoom msg, restricted_rooms
+        msg.reply "You cannot use this command in this room. You can use it in: #{("#" + room for room in restricted_rooms).join ', '}"
         return false
 
     msg.http("#{baseUrl}/incidents.json").headers(authHeader).get() (err, res, body) ->
@@ -64,7 +74,12 @@ module.exports = (robot) ->
   robot.respond /(?:status|statuspage) update (investigating|identified|monitoring|resolved) (.+)/i, (msg) ->
     if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
-        msg.reply "You do not have access to this command"
+        msg.reply "You do not have access to this command. Please ask the on-call for help ('vendbot who is on call')"
+        return false
+
+    if process.env.HUBOT_STATUS_PAGE_RESTRICT_ROOMS
+      unless checkRoom msg, restricted_rooms
+        msg.reply "You cannot use this command in this room. You can use it in: #{("#" + room for room in restricted_rooms).join ', '}"
         return false
 
     msg.http("#{baseUrl}/incidents.json").headers(authHeader).get() (err, res, body) ->
@@ -92,9 +107,14 @@ module.exports = (robot) ->
               msg.send "Updated incident \"#{unresolvedIncidents[0].name}\""
 
   robot.respond /(?:status|statuspage) open (investigating|identified|monitoring|resolved) ([^:]+)(: ?(.+))?/i, (msg) ->
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
+    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED and msg.match[1] != 'investigating'
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
-        msg.reply "You do not have access to this command"
+        msg.reply "You do not have access to this command. Please ask the on-call for help ('vendbot who is on call')"
+        return false
+
+    if process.env.HUBOT_STATUS_PAGE_RESTRICT_ROOMS
+      unless checkRoom msg, restricted_rooms
+        msg.reply "You cannot use this command in this room. You can use it in: #{("#" + room for room in restricted_rooms).join ', '}"
         return false
 
     if msg.match.length == 5
@@ -139,11 +159,6 @@ module.exports = (robot) ->
           msg.send ("#{component.name}" for component in working_components).join("\n") + "\n"
 
   robot.respond /(?:status|statuspage) ((?!(incidents|open|update|resolve|create))(\S ?)+)\?$/i, (msg) ->
-    if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
-      unless robot.auth.hasRole(msg.envelope.user, admin_role)
-        msg.reply "You do not have access to this command"
-        return false
-
     msg.http("#{baseUrl}/components.json")
      .headers(authHeader)
      .get() (err, res, body) ->
@@ -158,7 +173,12 @@ module.exports = (robot) ->
   robot.respond /(?:status|statuspage) ((\S ?)+) (major( outage)?|degraded( performance)?|partial( outage)?|operational)/i, (msg) ->
     if process.env.HUBOT_STATUS_PAGE_AUTH_ENABLED
       unless robot.auth.hasRole(msg.envelope.user, admin_role)
-        msg.reply "You do not have access to this command"
+        msg.reply "You do not have access to this command. Please ask the on-call for help ('vendbot who is on call')"
+        return false
+
+    if process.env.HUBOT_STATUS_PAGE_RESTRICT_ROOMS
+      unless checkRoom msg, restricted_rooms
+        msg.reply "You cannot use this command in this room. You can use it in: #{("#" + room for room in restricted_rooms).join ', '}"
         return false
 
     componentName = msg.match[1]

@@ -6,10 +6,13 @@ Interaction with the StatusPage.io API to open and update incidents, change comp
 
 ## Configuration
 
-* Register the two values as environment variables when starting your bot (as usual with Hubot scripts).
+* Register these values as environment variables when starting your bot (as usual with Hubot scripts).
  * `export HUBOT_STATUS_PAGE_ID=page_id_for_account`
  * `export HUBOT_STATUS_PAGE_TOKEN=token_for_status_page`
  * `export HUBOT_STATUS_PAGE_TWITTER_ENABLED=t_or_f`
+
+* Optional:
+ * `export HUBOT_STATUS_PAGE_RESTRICT_ROOMS="oncall,platform"`
 
 * If using auth (see auth.coffee from hubot-scripts package)
  * `export HUBOT_STATUS_PAGE_AUTH_ENABLED=1`
