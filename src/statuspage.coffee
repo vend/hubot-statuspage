@@ -22,11 +22,13 @@
 #   roidrage, raventools
 
 module.exports = (robot) ->
+  getRoomNameFromMessage = (msg) ->
+    return robot.adapter.client.rtm.dataStore.getChannelById(msg.envelope.room).name
 
-  checkRoom = (msg, restricted_rooms) ->
-    return true if restricted_rooms == false
-    return false unless msg.envelope.room in restricted_rooms
-    return true
+  checkRoom = (msg, restrictedRooms) ->
+    return true if restrictedRooms == false
+    roomName = getRoomNameFromMessage(msg)
+    return roomName in restrictedRooms
 
   baseUrl = "https://api.statuspage.io/v1/pages/#{process.env.HUBOT_STATUS_PAGE_ID}"
   authHeader = Authorization: "OAuth #{process.env.HUBOT_STATUS_PAGE_TOKEN}"
